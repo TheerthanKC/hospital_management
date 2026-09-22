@@ -30,7 +30,7 @@ app.post('/api/records', (req, res) => {
 });
 
 // Fallback route to serve the homepage
-app.get('*', (req, res) => {
+app.use((req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
