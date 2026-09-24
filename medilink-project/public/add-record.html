@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediLink - Add Record</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="navbar-container"></div>
+
+    <main>
+        <div class="dashboard-card">
+            <h2>Add New Patient Record</h2>
+            <p>Enter the diagnosis and prescription details below. This will be securely saved to the patient's file.</p>
+            
+            <!-- Reusing our modern form classes from the login page -->
+            <form id="add-record-form" class="auth-form" style="margin-top: 20px;">
+                <input type="text" id="record-patient-name" placeholder="Patient's Username" required>
+                <input type="text" id="record-diagnosis" placeholder="Diagnosis (e.g., Seasonal Flu)" required>
+                <input type="text" id="record-prescription" placeholder="Prescription / Notes" required>
+                <button type="submit" class="btn-submit">Save Medical Record</button>
+                <div id="record-msg" style="margin-top: 10px;"></div>
+            </form>
+        </div>
+    </main>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

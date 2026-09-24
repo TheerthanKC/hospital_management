@@ -1,4 +1,3 @@
-// server.js
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
@@ -7,29 +6,54 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware for parsing JSON and securing headers
 app.use(express.json());
 app.use(cors());
-
-// Serve static frontend files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Mock Database (In a real app, connect this to MongoDB/PostgreSQL)
+// Mock Databases
 const records = [];
+const users = []; // Stores registered users
 
-// API Endpoints
+// --- AUTHENTICATION ENDPOINTS ---
+
+// Register a new user
+app.post('/api/register', (req, res) => {
+    const { username, password, role } = req.body;
+    
+    // Check if user already exists
+    const userExists = users.find(u => u.username === username);
+    if (userExists) {
+        return res.status(400).json({ error: 'Username already taken' });
+    }
+
+    const newUser = { username, password, role };
+    users.push(newUser);
+    res.status(201).json({ message: 'Account created successfully', user: newUser });
+});
+
+// Login an existing user
+app.post('/api/login', (req, res) => {
+    const { username, password } = req.body;
+    
+    const user = users.find(u => u.username === username && u.password === password);
+    if (!user) {
+        return res.status(401).json({ error: 'Invalid username or password' });
+    }
+    
+    res.json({ message: 'Login successful', user });
+});
+
+// --- RECORD ENDPOINTS ---
 app.get('/api/records', (req, res) => {
     res.json(records);
 });
 
 app.post('/api/records', (req, res) => {
-    const newRecord = req.body;
-    // Input validation & sanitization should happen here
-    records.push(newRecord);
+    records.push(req.body);
     res.status(201).json({ message: 'Record added successfully' });
 });
 
-// Fallback route to serve the homepage
+// --- DEFAULT ROUTE ---
 app.use((req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
