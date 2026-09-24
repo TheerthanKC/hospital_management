@@ -26,6 +26,7 @@ if (navContainer && currentUser) {
                 ${currentUser.role === 'doctor' ? '<a href="/doctor-dashboard.html">Doctor Dashboard</a>' : ''}
                 ${currentUser.role === 'doctor' ? '<a href="/add-record.html">Add Record</a>' : ''}
                 ${currentUser.role === 'patient' ? '<a href="/patient-dashboard.html">Patient Dashboard</a>' : ''}
+                ${currentUser.role === 'patient' ? '<a href="/book-appointment.html">Book Appointment</a>' : ''}
                 
                 <!-- Modern Circular Profile & Dropdown -->
                 <div class="profile-dropdown">
@@ -235,4 +236,60 @@ async function loadRecords() {
 // Trigger the fetch automatically if a list container exists on the current page
 if (document.getElementById('all-records-list') || document.getElementById('my-records-list')) {
     loadRecords();
+}
+
+// --- 7. APPOINTMENT LOGIC ---
+const apptForm = document.getElementById('appointment-form');
+const doctorSelect = document.getElementById('appt-doctor');
+
+// A. Load doctors into the dropdown automatically when the page opens
+if (doctorSelect) {
+    fetch('/api/doctors')
+        .then(response => response.json())
+        .then(doctors => {
+            if (doctors.length === 0) {
+                doctorSelect.innerHTML = '<option value="" disabled selected>No doctors currently available</option>';
+            } else {
+                // Populate the dropdown with fetched doctors
+                doctorSelect.innerHTML = '<option value="" disabled selected>Select a doctor...</option>' + 
+                    doctors.map(d => `<option value="${d.username}">Dr. ${d.username}</option>`).join('');
+            }
+        })
+        .catch(error => console.error("Error fetching doctors:", error));
+}
+
+// B. Submit the appointment form to the backend
+if (apptForm) {
+    apptForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const doctorName = document.getElementById('appt-doctor').value;
+        const date = document.getElementById('appt-date').value;
+        const time = document.getElementById('appt-time').value;
+        const reason = document.getElementById('appt-reason').value;
+        const msgDiv = document.getElementById('appt-msg');
+
+        const newAppt = {
+            patientName: currentUser.username,
+            doctorName: doctorName,
+            date: date,
+            time: time,
+            reason: reason
+        };
+
+        try {
+            const response = await fetch('/api/appointments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newAppt)
+            });
+            
+            if (response.ok) {
+                msgDiv.innerHTML = `<span class="success-msg">Success! Your appointment with Dr. ${doctorName} is booked for ${date} at ${time}.</span>`;
+                apptForm.reset();
+            }
+        } catch (error) {
+            console.error("Error booking appointment:", error);
+        }
+    });
 }

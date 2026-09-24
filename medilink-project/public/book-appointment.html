@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediLink - Book Appointment</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="navbar-container"></div>
+
+    <main>
+        <div class="dashboard-card">
+            <h2>Book an Appointment</h2>
+            <p>Select an available medical professional and choose your preferred date and time.</p>
+            
+            <form id="appointment-form" class="auth-form" style="margin-top: 20px;">
+                <!-- Doctor Dropdown (Will be populated by JavaScript) -->
+                <select id="appt-doctor" required>
+                    <option value="" disabled selected>Loading available doctors...</option>
+                </select>
+                
+                <input type="date" id="appt-date" required>
+                <input type="time" id="appt-time" required>
+                <input type="text" id="appt-reason" placeholder="Reason for appointment (e.g., Routine Checkup)" required>
+                
+                <button type="submit" class="btn-submit">Confirm Appointment</button>
+                <div id="appt-msg" style="margin-top: 10px;"></div>
+            </form>
+        </div>
+    </main>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

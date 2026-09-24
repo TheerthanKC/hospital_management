@@ -43,6 +43,26 @@ app.post('/api/login', (req, res) => {
     res.json({ message: 'Login successful', user });
 });
 
+const appointments = []; // Stores booked appointments
+
+// --- APPOINTMENT ENDPOINTS ---
+
+// Get a list of all registered doctors for the dropdown
+app.get('/api/doctors', (req, res) => {
+    // Filter users who are registered as a doctor, admin, or medical professional
+    const doctors = users.filter(u => u.role === 'doctor' || u.role === 'admin' || u.role === 'medical professional');
+    
+    // Send back only their usernames and roles (never send passwords!)
+    const safeDoctorList = doctors.map(d => ({ username: d.username, role: d.role }));
+    res.json(safeDoctorList);
+});
+
+// Save a new appointment
+app.post('/api/appointments', (req, res) => {
+    appointments.push(req.body);
+    res.status(201).json({ message: 'Appointment booked successfully' });
+});
+
 // --- RECORD ENDPOINTS ---
 app.get('/api/records', (req, res) => {
     res.json(records);
