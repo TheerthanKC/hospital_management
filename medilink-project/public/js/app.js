@@ -15,24 +15,55 @@ if (currentUser && currentPage.includes('login.html')) {
 // 2. DYNAMIC NAVBAR (Only inject if logged in)
 const navContainer = document.getElementById('navbar-container');
 if (navContainer && currentUser) {
+    // Get the first letter of the username for the profile icon
+    const userInitial = currentUser.username.charAt(0).toUpperCase();
+
     navContainer.innerHTML = `
         <nav class="navbar">
-            <div class="logo">MediLink - Welcome, ${currentUser.username} (${currentUser.role})</div>
+            <div class="logo">MediLink</div>
             <div class="links">
                 <a href="/index.html">Home</a>
                 ${currentUser.role === 'doctor' ? '<a href="/doctor-dashboard.html">Doctor Dashboard</a>' : ''}
                 ${currentUser.role === 'doctor' ? '<a href="/add-record.html">Add Record</a>' : ''}
                 ${currentUser.role === 'patient' ? '<a href="/patient-dashboard.html">Patient Dashboard</a>' : ''}
-                <a href="#" id="logout-btn">Logout</a>
+                
+                <!-- Modern Circular Profile & Dropdown -->
+                <div class="profile-dropdown">
+                    <div class="profile-circle" id="profile-btn">${userInitial}</div>
+                    
+                    <div class="dropdown-menu" id="dropdown-menu">
+                        <div class="dropdown-header">
+                            <strong>${currentUser.username}</strong>
+                            <span>${currentUser.role}</span>
+                        </div>
+                        <a href="#" id="logout-btn" class="dropdown-item">Log Out</a>
+                    </div>
+                </div>
             </div>
         </nav>
     `;
 
+    // Dropdown Toggle Logic
+    const profileBtn = document.getElementById('profile-btn');
+    const dropdownMenu = document.getElementById('dropdown-menu');
+    
+    profileBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent click from bubbling up to the document
+        dropdownMenu.classList.toggle('active');
+    });
+
+    // Close dropdown if the user clicks anywhere else on the page
+    document.addEventListener('click', (e) => {
+        if (!profileBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+            dropdownMenu.classList.remove('active');
+        }
+    });
+
     // Handle Logout
     document.getElementById('logout-btn').addEventListener('click', (e) => {
         e.preventDefault();
-        localStorage.removeItem('medilink_user'); // Delete from user's device
-        window.location.href = '/login.html';
+        localStorage.removeItem('medilink_user'); // Delete session
+        window.location.href = '/login.html';     // Kick back to login
     });
 }
 
