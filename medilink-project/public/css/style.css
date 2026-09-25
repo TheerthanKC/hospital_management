@@ -3,6 +3,7 @@
 :root {
     --primary: #2563eb;
     --primary-hover: #1d4ed8;
+    --secondary: #10b981;
     --dark: #0f172a;
     --light: #ffffff;
     --bg-color: #f8fafc;
@@ -18,19 +19,47 @@
     font-family: 'Poppins', sans-serif;
 }
 
-/* --- Clean, Professional Background --- */
-body.login-body {
+body {
     background-color: var(--bg-color);
-    /* Subtle dot matrix pattern */
     background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
     background-size: 24px 24px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    color: var(--dark);
     min-height: 100vh;
 }
 
-/* --- Single Centered Card --- */
+body.login-body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* --- DASHBOARD STYLES --- */
+main {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 0 20px;
+    animation: fadeUp 0.6s ease-out;
+}
+
+main h1 { font-size: 2.2rem; margin-bottom: 8px; }
+main > p { color: var(--text-muted); font-size: 1.1rem; margin-bottom: 30px; }
+
+.dashboard-card {
+    background: var(--light);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--border-color);
+    margin-bottom: 20px;
+}
+
+.dashboard-card h2 {
+    font-size: 1.4rem;
+    margin-bottom: 15px;
+    color: var(--primary);
+}
+
+/* --- LOGIN & FORMS --- */
 .auth-wrapper {
     width: 100%;
     max-width: 420px;
@@ -51,30 +80,11 @@ body.login-body {
     border: 1px solid #ffffff;
 }
 
-.auth-header {
-    text-align: center;
-    margin-bottom: 30px;
-}
+.auth-header { text-align: center; margin-bottom: 30px; }
+.auth-header h2 { font-size: 1.75rem; font-weight: 600; margin-bottom: 8px; }
+.auth-header p { color: var(--text-muted); font-size: 0.95rem; }
 
-.auth-header h2 {
-    color: var(--dark);
-    font-size: 1.75rem;
-    font-weight: 600;
-    margin-bottom: 8px;
-}
-
-.auth-header p {
-    color: var(--text-muted);
-    font-size: 0.95rem;
-}
-
-/* --- Inputs & Buttons --- */
-.auth-form {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
+.auth-form { display: flex; flex-direction: column; gap: 16px; }
 .auth-form input, .auth-form select {
     width: 100%;
     padding: 12px 16px;
@@ -86,7 +96,6 @@ body.login-body {
     outline: none;
     color: var(--dark);
 }
-
 .auth-form input:focus, .auth-form select:focus {
     border-color: var(--primary);
     background: var(--light);
@@ -105,71 +114,21 @@ body.login-body {
     cursor: pointer;
     transition: all 0.2s ease;
 }
-
 .btn-submit:hover {
     background: var(--primary-hover);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
 }
 
-/* --- Toggle Utilities --- */
-.hidden-view {
-    display: none !important;
-}
+.hidden-view { display: none !important; }
+.toggle-link { text-align: center; margin-top: 25px; font-size: 0.9rem; color: var(--text-muted); }
+.toggle-link a { color: var(--primary); font-weight: 600; cursor: pointer; transition: color 0.2s; }
+.toggle-link a:hover { color: var(--primary-hover); text-decoration: underline; }
 
-.toggle-link {
-    text-align: center;
-    margin-top: 25px;
-    font-size: 0.9rem;
-    color: var(--text-muted);
-}
+.error-msg { color: #ef4444; font-size: 0.85rem; text-align: center; margin-top: 10px; display: block;}
+.success-msg { color: #10b981; font-size: 0.85rem; text-align: center; margin-top: 10px; display: block;}
 
-.toggle-link a {
-    color: var(--primary);
-    font-weight: 600;
-    text-decoration: none;
-    cursor: pointer;
-    transition: color 0.2s;
-}
-
-.toggle-link a:hover {
-    color: var(--primary-hover);
-    text-decoration: underline;
-}
-
-.error-msg { color: #ef4444; font-size: 0.85rem; text-align: center; margin-top: 10px; }
-.success-msg { color: #10b981; font-size: 0.85rem; text-align: center; margin-top: 10px; }
-/* --- Dashboard & Inner Page Styles --- */
-main {
-    padding: 40px 5%;
-    max-width: 1000px;
-    margin: 0 auto;
-    width: 100%;
-    animation: fadeUp 0.6s ease-out;
-}
-
-.dashboard-card {
-    background: var(--light);
-    padding: 35px;
-    border-radius: 16px;
-    box-shadow: var(--shadow-soft);
-    border: 1px solid var(--border-color);
-    margin-bottom: 25px;
-}
-
-.dashboard-card h1, .dashboard-card h2 {
-    color: var(--dark);
-    margin-bottom: 10px;
-}
-
-.dashboard-card p {
-    color: var(--text-muted);
-    line-height: 1.6;
-    margin-bottom: 20px;
-}
-/* =========================================
-   NAVIGATION BAR STYLES
-   ========================================= */
+/* --- NAVBAR --- */
 .navbar {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
@@ -183,114 +142,94 @@ main {
     z-index: 100;
     border-bottom: 1px solid var(--border-color);
 }
+.navbar .logo { font-size: 1.2rem; font-weight: 700; color: var(--primary); }
+.navbar .links { display: flex; gap: 20px; align-items: center; }
+.navbar a { color: var(--text-muted); text-decoration: none; font-weight: 500; font-size: 0.95rem; transition: color 0.2s ease; }
+.navbar a:hover { color: var(--primary); }
 
-.navbar .logo {
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: var(--primary);
-}
-
-.navbar .links {
-    display: flex;
-    gap: 20px;
-    align-items: center;
-}
-
-.navbar a {
-    color: var(--text-muted);
-    text-decoration: none;
-    font-weight: 500;
-    font-size: 0.95rem;
-    transition: color 0.2s ease;
-}
-
-.navbar a:hover {
-    color: var(--primary);
-}
-/* =========================================
-   PROFILE DROPDOWN STYLES
-   ========================================= */
-.profile-dropdown {
-    position: relative;
-    display: inline-block;
-    margin-left: 10px;
-}
-
-/* The Circular Button */
+/* --- PROFILE DROPDOWN --- */
+.profile-dropdown { position: relative; display: inline-block; margin-left: 10px; }
 .profile-circle {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+    width: 40px; height: 40px; border-radius: 50%;
     background: linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: 1.1rem;
-    cursor: pointer;
-    user-select: none;
+    color: white; display: flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: 1.1rem; cursor: pointer; user-select: none;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+.profile-circle:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
 
-.profile-circle:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-}
-
-/* The Hidden Dropdown Menu */
 .dropdown-menu {
-    position: absolute;
-    top: 55px;
-    right: 0;
-    background: var(--light);
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-    border: 1px solid var(--border-color);
-    width: 200px;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-10px);
+    position: absolute; top: 55px; right: 0;
+    background: var(--light); border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15); border: 1px solid var(--border-color);
+    width: 200px; opacity: 0; visibility: hidden; transform: translateY(-10px);
     transition: all 0.2s ease;
 }
+.dropdown-menu.active { opacity: 1; visibility: visible; transform: translateY(0); }
 
-.dropdown-menu.active {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-}
+.dropdown-header { padding: 16px; border-bottom: 1px solid var(--border-color); display: flex; flex-direction: column; }
+.dropdown-header strong { color: var(--dark); font-size: 1rem; }
+.dropdown-header span { color: var(--text-muted); font-size: 0.85rem; text-transform: capitalize; margin-top: 2px; }
 
-/* User Info Header Inside Dropdown */
-.dropdown-header {
-    padding: 16px;
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    flex-direction: column;
-}
-
-.dropdown-header strong {
-    color: var(--dark);
-    font-size: 1rem;
-}
-
-.dropdown-header span {
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    text-transform: capitalize;
-    margin-top: 2px;
-}
-
-/* Logout Button Inside Dropdown */
 .dropdown-item {
-    display: block;
-    padding: 12px 16px;
-    color: #ef4444 !important; /* Premium Red */
-    font-weight: 500;
-    text-decoration: none;
-    transition: background 0.2s ease;
+    display: block; padding: 12px 16px; color: #ef4444 !important;
+    font-weight: 500; text-decoration: none; transition: background 0.2s ease;
     border-radius: 0 0 12px 12px;
 }
+.dropdown-item:hover { background: #fef2f2; }
 
-.dropdown-item:hover {
-    background: #fef2f2;
+/* --- PATIENT UID BADGE --- */
+.uid-badge {
+    display: inline-block;
+    background: #eff6ff;
+    color: var(--primary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
 }
+
+/* --- APPOINTMENT STATUS BADGE --- */
+.status-badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    padding: 4px 12px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+.status-pending { background: #fef9c3; color: #a16207; }
+.status-accepted { background: #dcfce7; color: #15803d; }
+.status-rejected { background: #fee2e2; color: #b91c1c; }
+
+/* --- APPOINTMENT ACCEPT / REJECT ACTIONS --- */
+.appt-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+.btn-accept, .btn-reject {
+    flex: 1;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.btn-accept {
+    background: var(--secondary);
+    color: white;
+}
+.btn-accept:hover { background: #0ea371; }
+.btn-reject {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+.btn-reject:hover { background: #fecaca; }

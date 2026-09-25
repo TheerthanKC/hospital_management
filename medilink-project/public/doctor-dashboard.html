@@ -11,11 +11,19 @@
     <div id="navbar-container"></div>
 
     <main>
+        <!-- NEW: Appointments Card -->
         <div class="dashboard-card">
-            <h2>Doctor Dashboard</h2>
-            <p>Welcome. Here you can view the master list of patient records.</p>
-            
-            <!-- We will use JavaScript to fill this list later -->
+            <h2>Upcoming Appointments</h2>
+            <p>View scheduled patient appointments below.</p>
+            <div id="appointment-list" style="margin-top: 20px;">
+                <p style="color: var(--text-muted);">Loading appointments...</p>
+            </div>
+        </div>
+
+        <!-- EXISTING: Patient Records Card -->
+        <div class="dashboard-card">
+            <h2>Patient Records Database</h2>
+            <p>Welcome. Here you can view the master list of patient medical records.</p>
             <div id="all-records-list" style="margin-top: 20px;">
                 <p style="color: var(--text-muted);">No records found in the database yet.</p>
             </div>
