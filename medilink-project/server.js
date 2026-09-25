@@ -46,6 +46,10 @@ app.post('/api/login', (req, res) => {
 const appointments = []; // Stores booked appointments
 
 // --- APPOINTMENT ENDPOINTS ---
+// Get all appointments
+app.get('/api/appointments', (req, res) => {
+    res.json(appointments);
+});
 
 // Get a list of all registered doctors for the dropdown
 app.get('/api/doctors', (req, res) => {
