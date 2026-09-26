@@ -14,36 +14,114 @@ if (currentUser && currentPage.includes('login.html')) {
 }
 
 // ==========================================
+// 1b. THEME (applied immediately, on every page, to avoid a flash)
+// ==========================================
+(function initTheme() {
+    const savedTheme = localStorage.getItem('medilink_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+})();
+
+// ==========================================
+// 1c. GLOBAL MODAL (used for "View Profile" and "Help & Support")
+// ==========================================
+function ensureModal() {
+    if (document.getElementById('app-modal-overlay')) return;
+    document.body.insertAdjacentHTML('beforeend', `
+        <div class="modal-overlay" id="app-modal-overlay">
+            <div class="modal-box">
+                <button class="modal-close" id="modal-close-btn" aria-label="Close">&times;</button>
+                <div id="modal-content-area"></div>
+            </div>
+        </div>
+    `);
+    const overlay = document.getElementById('app-modal-overlay');
+    document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeModal();
+    });
+}
+
+function openModal(contentHtml) {
+    ensureModal();
+    document.getElementById('modal-content-area').innerHTML = contentHtml;
+    document.getElementById('app-modal-overlay').classList.add('active');
+}
+
+function closeModal() {
+    const overlay = document.getElementById('app-modal-overlay');
+    if (overlay) overlay.classList.remove('active');
+}
+
+function showProfileModal() {
+    const userInitial = currentUser.username.charAt(0).toUpperCase();
+    openModal(`
+        <h2 style="margin-bottom: 20px;">My Profile</h2>
+        <div class="profile-modal-avatar">${userInitial}</div>
+        <div class="profile-modal-row"><span>Username</span><strong>${currentUser.username}</strong></div>
+        <div class="profile-modal-row"><span>Role</span><strong style="text-transform: capitalize;">${currentUser.role}</strong></div>
+        ${currentUser.uid ? `<div class="profile-modal-row"><span>Unique ID</span><strong>${currentUser.uid}</strong></div>` : ''}
+        <div class="profile-modal-row"><span>Member Since</span><strong>${currentUser.joinedDate || 'N/A'}</strong></div>
+    `);
+}
+
+function showHelpModal() {
+    openModal(`
+        <h2 style="margin-bottom: 20px;">Help &amp; Support</h2>
+        <p style="color: var(--text-muted); margin-bottom: 16px;">Need a hand with MediLink? Reach out any time.</p>
+        <div class="profile-modal-row"><span>Email</span><strong>support@medilink.example</strong></div>
+        <div class="profile-modal-row"><span>Hours</span><strong>Mon–Fri, 9am–6pm</strong></div>
+        <div class="profile-modal-row"><span>Emergency?</span><strong>Call your local emergency number</strong></div>
+    `);
+}
+
+// ==========================================
 // 2. DYNAMIC NAVBAR WITH PROFILE DROPDOWN
 // ==========================================
 const navContainer = document.getElementById('navbar-container');
 if (navContainer && currentUser) {
     const userInitial = currentUser.username.charAt(0).toUpperCase();
 
+    const isActive = (href) => currentPage.includes(href) ? ' class="active"' : '';
+
     const doctorLinks = `
-        <a href="/doctor-dashboard.html">Dashboard</a>
-        <a href="/add-record.html">Records</a>
+        <a href="/doctor-dashboard.html"${isActive('doctor-dashboard')}>Dashboard</a>
+        <a href="/add-record.html"${isActive('add-record')}>Records</a>
     `;
     const patientLinks = `
-        <a href="/patient-dashboard.html">Patient Dashboard</a>
-        <a href="/book-appointment.html">Book Appointment</a>
+        <a href="/patient-dashboard.html"${isActive('patient-dashboard')}>Patient Dashboard</a>
+        <a href="/book-appointment.html"${isActive('book-appointment')}>Book Appointment</a>
     `;
 
     navContainer.innerHTML = `
         <nav class="navbar">
-            <div class="logo">MediLink</div>
+            <div class="logo">🩺 MediLink</div>
             <div class="links">
-                <a href="/index.html">Home</a>
+                <a href="/index.html"${isActive('index')}>Home</a>
                 ${currentUser.role === 'doctor' ? doctorLinks : ''}
                 ${currentUser.role === 'patient' ? patientLinks : ''}
                 <div class="profile-dropdown">
                     <div class="profile-circle" id="profile-btn">${userInitial}</div>
                     <div class="dropdown-menu" id="dropdown-menu">
                         <div class="dropdown-header">
-                            <strong>${currentUser.username}</strong>
-                            <span>${currentUser.role}</span>
+                            <div class="dropdown-avatar">${userInitial}</div>
+                            <div>
+                                <strong>${currentUser.username}</strong>
+                                <span>${currentUser.role}</span>
+                            </div>
                         </div>
-                        <a href="#" class="dropdown-item" id="logout-btn">Log Out</a>
+                        ${currentUser.uid ? `<div class="dropdown-uid">UID: ${currentUser.uid}</div>` : ''}
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item" id="view-profile-btn"><span class="item-icon">👤</span> View Full Profile</a>
+                        <div class="dropdown-item theme-toggle-row">
+                            <span><span class="item-icon">🌙</span> Dark Mode</span>
+                            <label class="switch">
+                                <input type="checkbox" id="theme-toggle-checkbox">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <a href="#" class="dropdown-item" id="help-btn"><span class="item-icon">💬</span> Help &amp; Support</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item logout-item" id="logout-btn"><span class="item-icon">🚪</span> Log Out</a>
                     </div>
                 </div>
             </div>
@@ -61,6 +139,29 @@ if (navContainer && currentUser) {
         if (!profileBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
             dropdownMenu.classList.remove('active');
         }
+    });
+
+    // View Full Profile
+    document.getElementById('view-profile-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        dropdownMenu.classList.remove('active');
+        showProfileModal();
+    });
+
+    // Help & Support
+    document.getElementById('help-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        dropdownMenu.classList.remove('active');
+        showHelpModal();
+    });
+
+    // Dark mode toggle
+    const themeCheckbox = document.getElementById('theme-toggle-checkbox');
+    themeCheckbox.checked = document.documentElement.getAttribute('data-theme') === 'dark';
+    themeCheckbox.addEventListener('change', () => {
+        const newTheme = themeCheckbox.checked ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('medilink_theme', newTheme);
     });
 
     // Logout

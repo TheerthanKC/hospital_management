@@ -58,7 +58,7 @@ app.post('/api/register', (req, res) => {
         return res.status(400).json({ error: 'Username already taken' });
     }
 
-    const newUser = { username, password, role };
+    const newUser = { username, password, role, joinedDate: new Date().toLocaleDateString() };
 
     // Patients AND doctors get a UID (needed for appointment/record audit trails)
     if (role === 'patient' || role === 'doctor') {
