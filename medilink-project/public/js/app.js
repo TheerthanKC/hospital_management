@@ -21,8 +21,8 @@ if (navContainer && currentUser) {
     const userInitial = currentUser.username.charAt(0).toUpperCase();
 
     const doctorLinks = `
-        <a href="/doctor-dashboard.html">Doctor Dashboard</a>
-        <a href="/add-record.html">Add Record</a>
+        <a href="/doctor-dashboard.html">Dashboard</a>
+        <a href="/add-record.html">Records</a>
     `;
     const patientLinks = `
         <a href="/patient-dashboard.html">Patient Dashboard</a>
@@ -164,13 +164,55 @@ if (btnShowRegister && btnShowLogin) {
 // ==========================================
 // 6. RECORD MANAGEMENT
 // ==========================================
+
+// --- Patient UID lookup for the Add Record form ---
+// Since usernames aren't unique, doctors identify patients by UID; the name is auto-filled.
+const recordUidInput = document.getElementById('record-patient-uid');
+const recordNameDisplay = document.getElementById('record-patient-name-display');
+let resolvedPatientName = null;
+
+if (recordUidInput) {
+    recordUidInput.addEventListener('input', async () => {
+        const uid = recordUidInput.value.trim();
+        resolvedPatientName = null;
+
+        if (uid.length === 0) {
+            recordNameDisplay.innerHTML = '';
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/patient-by-uid/${encodeURIComponent(uid)}`);
+            const data = await response.json();
+
+            if (response.ok) {
+                resolvedPatientName = data.username;
+                recordNameDisplay.innerHTML = `<span class="success-msg">Patient found: ${data.username}</span>`;
+            } else {
+                recordNameDisplay.innerHTML = `<span class="error-msg">${data.error}</span>`;
+            }
+        } catch (error) {
+            recordNameDisplay.innerHTML = `<span class="error-msg">Lookup failed. Try again.</span>`;
+        }
+    });
+}
+
 const addRecordForm = document.getElementById('add-record-form');
 if (addRecordForm) {
     addRecordForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const msgDiv = document.getElementById('record-msg');
+
+        if (!resolvedPatientName) {
+            msgDiv.innerHTML = `<span class="error-msg">Enter a valid patient UID before saving.</span>`;
+            return;
+        }
+
         const newRecord = {
+            type: 'diagnosis',
             doctorName: currentUser.username,
-            patientName: document.getElementById('record-patient-name').value,
+            patientName: resolvedPatientName,
+            patientUid: recordUidInput.value.trim(),
             diagnosis: document.getElementById('record-diagnosis').value,
             prescription: document.getElementById('record-prescription').value,
             date: new Date().toLocaleDateString()
@@ -183,8 +225,10 @@ if (addRecordForm) {
                 body: JSON.stringify(newRecord)
             });
             if (response.ok) {
-                document.getElementById('record-msg').innerHTML = `<span class="success-msg">Record securely saved!</span>`;
+                msgDiv.innerHTML = `<span class="success-msg">Record securely saved!</span>`;
                 addRecordForm.reset();
+                recordNameDisplay.innerHTML = '';
+                resolvedPatientName = null;
             }
         } catch (error) {
             console.error(error);
@@ -192,51 +236,151 @@ if (addRecordForm) {
     });
 }
 
-async function loadRecords() {
+// --- Restricted view: Doctor Dashboard's "Patient Appointment History" ---
+// Only shows this doctor's own accepted/rejected appointment letters
+async function loadAppointmentHistory() {
+    const historyList = document.getElementById('appointment-history-list');
+    if (!historyList) return;
+
     try {
         const response = await fetch('/api/records');
         const records = await response.json();
 
-        // Doctor/Admin view: all records
-        const allRecordsList = document.getElementById('all-records-list');
-        if (allRecordsList) {
-            if (records.length === 0) {
-                allRecordsList.innerHTML = `<p style="color: var(--text-muted);">No records found.</p>`;
-            } else {
-                allRecordsList.innerHTML = records.map(r => `
-                    <div class="dashboard-card" style="margin-bottom: 12px;">
-                        <p><strong>Patient:</strong> ${r.patientName}</p>
-                        <p><strong>Diagnosis:</strong> ${r.diagnosis}</p>
-                        <p><strong>Prescription:</strong> ${r.prescription}</p>
-                        <p style="color: var(--text-muted); font-size: 0.85rem;">Logged by Dr. ${r.doctorName} on ${r.date}</p>
-                    </div>
-                `).join('');
-            }
-        }
+        const myHistory = records.filter(
+            r => r.type === 'appointment-status' && r.doctorName === currentUser.username
+        );
 
-        // Patient view: only their own records
-        const myRecordsList = document.getElementById('my-records-list');
-        if (myRecordsList) {
-            const myRecords = records.filter(r => r.patientName === currentUser.username);
-            if (myRecords.length === 0) {
-                myRecordsList.innerHTML = `<p style="color: var(--text-muted);">No medical records on file.</p>`;
-            } else {
-                myRecordsList.innerHTML = myRecords.map(r => `
-                    <div class="dashboard-card" style="margin-bottom: 12px;">
-                        <p><strong>Diagnosis:</strong> ${r.diagnosis}</p>
-                        <p><strong>Prescription:</strong> ${r.prescription}</p>
-                        <p style="color: var(--text-muted); font-size: 0.85rem;">Attending Dr. ${r.doctorName} | Date: ${r.date}</p>
-                    </div>
-                `).join('');
-            }
+        if (myHistory.length === 0) {
+            historyList.innerHTML = `<p style="color: var(--text-muted);">No appointment history yet.</p>`;
+        } else {
+            historyList.innerHTML = myHistory.map(r => renderAppointmentLetter(r)).join('');
         }
     } catch (error) {
         console.error(error);
     }
 }
 
-if (document.getElementById('all-records-list') || document.getElementById('my-records-list')) {
-    loadRecords();
+// --- Global view: "Records" page — all manual records + ALL doctors' accept/reject letters ---
+async function loadAllRecords() {
+    const allRecordsList = document.getElementById('all-records-list');
+    if (!allRecordsList) return;
+
+    try {
+        const response = await fetch('/api/records');
+        const records = await response.json();
+
+        if (records.length === 0) {
+            allRecordsList.innerHTML = `<p style="color: var(--text-muted);">No records found.</p>`;
+        } else {
+            allRecordsList.innerHTML = records.map(r => {
+                if (r.type === 'appointment-status') {
+                    return renderAppointmentLetter(r);
+                }
+                return renderDiagnosisRecord(r);
+            }).join('');
+        }
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+// Shared card renderers
+function renderAppointmentLetter(r) {
+    return `
+        <div class="dashboard-card" style="margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap;">
+                <div>
+                    <p><strong>Appointment ${r.status === 'accepted' ? 'Accepted' : 'Rejected'}</strong></p>
+                    <p class="uid-badge">Doctor UID: ${r.doctorUid || 'N/A'}</p>
+                    <p><strong>Doctor:</strong> Dr. ${r.doctorName}</p>
+                    <p class="uid-badge">Patient UID: ${r.patientUid || 'N/A'}</p>
+                    <p><strong>Patient:</strong> ${r.patientName}</p>
+                    <p><strong>Reason for visit:</strong> ${r.reason}</p>
+                    <p style="color: var(--text-muted); font-size: 0.85rem;">${r.date}</p>
+                </div>
+                <span class="status-badge status-${r.status}">${r.status}</span>
+            </div>
+        </div>
+    `;
+}
+
+function renderDiagnosisRecord(r) {
+    return `
+        <div class="dashboard-card" style="margin-bottom: 12px;">
+            ${r.patientUid ? `<p class="uid-badge">Patient UID: ${r.patientUid}</p>` : ''}
+            <p><strong>Patient:</strong> ${r.patientName}</p>
+            <p><strong>Diagnosis:</strong> ${r.diagnosis}</p>
+            <p><strong>Prescription:</strong> ${r.prescription}</p>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Logged by Dr. ${r.doctorName} on ${r.date}</p>
+        </div>
+    `;
+}
+
+// --- Patient view: their own diagnosis records only ---
+async function loadMyRecords() {
+    const myRecordsList = document.getElementById('my-records-list');
+    if (!myRecordsList) return;
+
+    try {
+        const response = await fetch('/api/records');
+        const records = await response.json();
+
+        const myRecords = records.filter(r => r.type !== 'appointment-status' && r.patientName === currentUser.username);
+        if (myRecords.length === 0) {
+            myRecordsList.innerHTML = `<p style="color: var(--text-muted);">No medical records on file.</p>`;
+        } else {
+            myRecordsList.innerHTML = myRecords.map(r => `
+                <div class="dashboard-card" style="margin-bottom: 12px;">
+                    <p><strong>Diagnosis:</strong> ${r.diagnosis}</p>
+                    <p><strong>Prescription:</strong> ${r.prescription}</p>
+                    <p style="color: var(--text-muted); font-size: 0.85rem;">Attending Dr. ${r.doctorName} | Date: ${r.date}</p>
+                </div>
+            `).join('');
+        }
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+if (document.getElementById('appointment-history-list')) loadAppointmentHistory();
+if (document.getElementById('all-records-list')) loadAllRecords();
+if (document.getElementById('my-records-list')) loadMyRecords();
+
+// ==========================================
+// 6b. MY APPOINTMENT STATUS (PATIENT DASHBOARD)
+// ==========================================
+async function loadMyAppointments() {
+    const myApptList = document.getElementById('my-appointments-list');
+    if (!myApptList) return;
+
+    try {
+        const response = await fetch('/api/appointments');
+        const allAppointments = await response.json();
+        const myAppointments = allAppointments.filter(a => a.patientName === currentUser.username);
+
+        if (myAppointments.length === 0) {
+            myApptList.innerHTML = `<p style="color: var(--text-muted);">You haven't requested any appointments yet.</p>`;
+        } else {
+            myApptList.innerHTML = myAppointments.map(appt => `
+                <div class="dashboard-card" style="margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap;">
+                        <div>
+                            <p><strong>Doctor:</strong> Dr. ${appt.doctorName}</p>
+                            <p><strong>Date:</strong> ${appt.date} at ${appt.time}</p>
+                            <p><strong>Reason:</strong> ${appt.reason}</p>
+                        </div>
+                        <span class="status-badge status-${appt.status}">${appt.status}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+    } catch (error) {
+        myApptList.innerHTML = `<p class="error-msg">Failed to load your appointments.</p>`;
+    }
+}
+
+if (document.getElementById('my-appointments-list')) {
+    loadMyAppointments();
 }
 
 // ==========================================

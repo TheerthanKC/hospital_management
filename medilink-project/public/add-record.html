@@ -3,28 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MediLink - Add Record</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>MediLink - Records</title>
+    <link rel="stylesheet" href="css/style.css?v=2">
 </head>
 <body>
     <div id="navbar-container"></div>
 
     <main>
-        <div class="dashboard-card">
-            <h2>Add New Patient Record</h2>
-            <p>Enter the diagnosis and prescription details below. This will be securely saved to the patient's file.</p>
-            
-            <!-- Reusing our modern form classes from the login page -->
-            <form id="add-record-form" class="auth-form" style="margin-top: 20px;">
-                <input type="text" id="record-patient-name" placeholder="Patient's Username" required>
-                <input type="text" id="record-diagnosis" placeholder="Diagnosis (e.g., Seasonal Flu)" required>
-                <input type="text" id="record-prescription" placeholder="Prescription / Notes" required>
-                <button type="submit" class="btn-submit">Save Medical Record</button>
-                <div id="record-msg" style="margin-top: 10px;"></div>
-            </form>
+        <div class="records-grid">
+
+            <!-- GRID 1: Add a record manually -->
+            <div class="dashboard-card">
+                <h2>Add Patient Record</h2>
+                <p>Enter the patient's UID to look them up, then add a diagnosis and prescription.</p>
+
+                <form id="add-record-form" class="auth-form" style="margin-top: 20px;">
+                    <input type="text" id="record-patient-uid" placeholder="Patient UID (e.g. 2609260001)" required>
+                    <p id="record-patient-name-display" style="font-size: 0.85rem; margin-top: -8px;"></p>
+
+                    <input type="text" id="record-diagnosis" placeholder="Diagnosis (e.g., Seasonal Flu)" required>
+                    <input type="text" id="record-prescription" placeholder="Prescription / Notes" required>
+                    <button type="submit" class="btn-submit">Save Medical Record</button>
+                    <div id="record-msg" style="margin-top: 10px;"></div>
+                </form>
+            </div>
+
+            <!-- GRID 2: All records — manual diagnoses + appointment accept/reject letters, from every doctor -->
+            <div class="dashboard-card">
+                <h2>All Records</h2>
+                <p>Manually added records and appointment acceptance/rejection letters from every doctor appear here.</p>
+                <div id="all-records-list" style="margin-top: 20px;">
+                    <p style="color: var(--text-muted);">Loading records...</p>
+                </div>
+            </div>
+
         </div>
     </main>
 
-    <script src="js/app.js"></script>
+    <script src="js/app.js?v=2"></script>
 </body>
 </html>

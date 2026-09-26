@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MediLink - Doctor Dashboard</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=2">
 </head>
 <body>
     <!-- The JavaScript injects the navbar here -->
     <div id="navbar-container"></div>
 
     <main>
-        <!-- NEW: Appointments Card -->
+        <!-- Appointments Card -->
         <div class="dashboard-card">
             <h2>Upcoming Appointments</h2>
             <p>View scheduled patient appointments below.</p>
@@ -20,16 +20,16 @@
             </div>
         </div>
 
-        <!-- EXISTING: Patient Records Card -->
+        <!-- Patient Appointment History Card -->
         <div class="dashboard-card">
-            <h2>Patient Records Database</h2>
-            <p>Welcome. Here you can view the master list of patient medical records.</p>
-            <div id="all-records-list" style="margin-top: 20px;">
+            <h2>Patient Appointment History</h2>
+            <p>Appointments you've accepted or rejected appear here, along with the patient's details and reason for visit.</p>
+            <div id="appointment-history-list" style="margin-top: 20px;">
                 <p style="color: var(--text-muted);">No records found in the database yet.</p>
             </div>
         </div>
     </main>
 
-    <script src="js/app.js"></script>
+    <script src="js/app.js?v=2"></script>
 </body>
 </html>

@@ -8,7 +8,18 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(cors());
-app.use(express.static(path.join(__dirname, 'public')));
+
+// Serve static files with caching disabled — prevents the browser from running
+// a stale cached copy of app.js / style.css after you update them
+app.use(express.static(path.join(__dirname, 'public'), {
+    etag: false,
+    lastModified: false,
+    setHeaders: (res) => {
+        res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
+    }
+}));
 
 // Mock Databases
 const records = [];
@@ -17,22 +28,26 @@ const appointments = [];
 
 let appointmentIdCounter = 1;
 
-// Generates a unique patient UID: YYMMDD + 4-digit random number (1-9999)
+// Tracks the next sequence number to use for each day's UID prefix (YYMMDD -> next number)
+const uidCounters = {};
+
+// Generates a sequential patient UID: YYMMDD + 4-digit sequence number (0001, 0002, ...)
+// The sequence resets back to 0001 each new day.
 function generateUID() {
     const now = new Date();
     const yy = String(now.getFullYear()).slice(-2);
     const mm = String(now.getMonth() + 1).padStart(2, '0');
     const dd = String(now.getDate()).padStart(2, '0');
+    const datePrefix = `${yy}${mm}${dd}`;
 
-    let uid;
-    let attempts = 0;
-    do {
-        const rand = Math.floor(Math.random() * 9999) + 1; // 1 - 9999
-        uid = `${yy}${mm}${dd}${String(rand).padStart(4, '0')}`;
-        attempts++;
-    } while (users.some(u => u.uid === uid) && attempts < 10000);
+    if (!uidCounters[datePrefix]) {
+        uidCounters[datePrefix] = 1;
+    }
 
-    return uid;
+    const sequence = uidCounters[datePrefix];
+    uidCounters[datePrefix]++;
+
+    return `${datePrefix}${String(sequence).padStart(4, '0')}`;
 }
 
 // --- AUTHENTICATION ENDPOINTS ---
@@ -45,8 +60,8 @@ app.post('/api/register', (req, res) => {
 
     const newUser = { username, password, role };
 
-    // Only patients get a UID
-    if (role === 'patient') {
+    // Patients AND doctors get a UID (needed for appointment/record audit trails)
+    if (role === 'patient' || role === 'doctor') {
         newUser.uid = generateUID();
     }
 
@@ -60,6 +75,12 @@ app.post('/api/login', (req, res) => {
     if (!user) {
         return res.status(401).json({ error: 'Invalid username or password' });
     }
+
+    // Backfill: fix any patient/doctor account created before UIDs existed
+    if ((user.role === 'patient' || user.role === 'doctor') && !user.uid) {
+        user.uid = generateUID();
+    }
+
     res.json({ message: 'Login successful', user });
 });
 
@@ -72,6 +93,16 @@ app.get('/api/doctors', (req, res) => {
     const doctors = users.filter(u => u.role === 'doctor' || u.role === 'admin' || u.role === 'medical professional');
     const safeDoctorList = doctors.map(d => ({ username: d.username, role: d.role }));
     res.json(safeDoctorList);
+});
+
+// Look up a patient by their UID (used by the "Add Record" form to auto-fill the name,
+// since usernames aren't guaranteed unique)
+app.get('/api/patient-by-uid/:uid', (req, res) => {
+    const patient = users.find(u => u.uid === req.params.uid && u.role === 'patient');
+    if (!patient) {
+        return res.status(404).json({ error: 'No patient found with that UID' });
+    }
+    res.json({ username: patient.username, uid: patient.uid });
 });
 
 app.post('/api/appointments', (req, res) => {
@@ -107,6 +138,22 @@ app.patch('/api/appointments/:id', (req, res) => {
     }
 
     appointment.status = status;
+
+    // Look up the doctor's UID for the audit trail
+    const doctor = users.find(u => u.username === appointment.doctorName);
+
+    // Auto-generate an acceptance/rejection letter, stored alongside manual records
+    records.push({
+        type: 'appointment-status',
+        status: appointment.status,
+        doctorName: appointment.doctorName,
+        doctorUid: doctor ? doctor.uid : null,
+        patientName: appointment.patientName,
+        patientUid: appointment.patientUid,
+        reason: appointment.reason,
+        date: new Date().toLocaleDateString()
+    });
+
     res.json({ message: `Appointment ${status}`, appointment });
 });
 
