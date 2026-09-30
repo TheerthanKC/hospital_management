@@ -50,6 +50,10 @@ body {
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Sticky footer: on every page except login, the footer sits at the bottom */
+body:not(.login-body) { display: flex; flex-direction: column; }
+body:not(.login-body) main { flex: 1 0 auto; width: 100%; }
+
 body.login-body {
     display: flex;
     justify-content: center;
@@ -527,3 +531,14 @@ input:checked + .slider::before { transform: translateX(18px); }
 }
 .page-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .page-ellipsis { color: var(--text-muted); padding: 0 4px; }
+
+/* --- Footer --- */
+.site-footer { margin-top: 20px; background: var(--light); border-top: 1px solid var(--border-color); }
+.footer-inner { max-width: 1180px; margin: 0 auto; padding: 32px 20px; display: flex; flex-wrap: wrap; gap: 28px 60px; justify-content: space-between; }
+.footer-logo { font-weight: 700; font-size: 1.15rem; color: var(--primary); margin-bottom: 6px; }
+.site-footer p { color: var(--text-muted); font-size: 0.88rem; max-width: 36ch; }
+.site-footer nav { display: flex; flex-direction: column; gap: 8px; }
+.site-footer nav a { color: var(--dark); text-decoration: none; font-size: 0.9rem; }
+.site-footer nav a:hover { color: var(--primary); }
+.footer-emergency { align-self: flex-end; }
+.footer-copy { text-align: center; padding: 14px; font-size: 0.8rem; color: var(--text-muted); border-top: 1px solid var(--border-color); }

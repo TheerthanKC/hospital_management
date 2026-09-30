@@ -172,6 +172,44 @@ if (navContainer && currentUser) {
     });
 }
 
+// ==========================================
+// 2b. FOOTER (injected on every page except login)
+// ==========================================
+function renderFooter() {
+    if (!currentUser || currentPage.includes('login.html')) return;
+    if (document.querySelector('.site-footer')) return;
+
+    // Only show the dashboard link that matches the logged-in role
+    const dashboardLink = currentUser.role === 'patient'
+        ? '<a href="/patient-dashboard.html">Patient dashboard</a>'
+        : '<a href="/doctor-dashboard.html">Doctor dashboard</a>';
+
+    const footer = document.createElement('footer');
+    footer.className = 'site-footer';
+    footer.innerHTML = `
+        <div class="footer-inner">
+            <div>
+                <div class="footer-logo">&#129658; MediLink</div>
+                <p>Appointments, records and care, kept in one secure place.</p>
+            </div>
+            <nav aria-label="Footer">
+                <a href="/index.html">Home</a>
+                ${dashboardLink}
+                <a href="#" id="footer-help">Help and support</a>
+            </nav>
+            <p class="footer-emergency">In an emergency, call your local emergency number.</p>
+        </div>
+        <div class="footer-copy">&copy; ${new Date().getFullYear()} MediLink. All rights reserved.</div>
+    `;
+    document.body.appendChild(footer);
+
+    document.getElementById('footer-help').addEventListener('click', (e) => {
+        e.preventDefault();
+        showHelpModal();
+    });
+}
+renderFooter();
+
 // Show the patient's UID on their dashboard, if present
 const uidDisplay = document.getElementById('patient-uid');
 if (uidDisplay && currentUser && currentUser.uid) {

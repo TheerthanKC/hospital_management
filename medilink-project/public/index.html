@@ -3,20 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MediLink - Dashboard</title>
+    <title>MediLink - Home</title>
     <link rel="stylesheet" href="css/style.css?v=2">
+    <link rel="stylesheet" href="css/home.css?v=1">
 </head>
 <body>
-    <!-- The JavaScript will inject the modern navbar here -->
     <div id="navbar-container"></div>
 
-    <main>
-        <div class="dashboard-card">
-            <h1>Welcome to MediLink</h1>
-            <p>Your secure healthcare management portal. Please use the navigation menu above to access your records, add new data, or view your dashboard.</p>
-        </div>
+    <main class="home">
+        <!-- HERO -->
+        <section class="hero" id="hero">
+            <div class="hero-copy">
+                <h1 id="hero-title">Welcome to MediLink</h1>
+                <p class="hero-sub" id="hero-sub">Your secure healthcare portal.</p>
+                <p class="hero-note" id="hero-note" hidden></p>
+
+                <form class="search-bar" id="doctor-search" role="search">
+                    <input type="search" id="search-input" placeholder="Search a doctor or specialty, e.g. Cardiology" aria-label="Search doctors">
+                    <button type="submit" class="btn-submit">Search</button>
+                </form>
+                <div class="chip-row" id="hero-chips" aria-label="Popular specialties"></div>
+            </div>
+
+            <aside class="hero-panel" id="openings-panel">
+                <h2>Earliest openings today</h2>
+                <ul id="openings-list"></ul>
+            </aside>
+        </section>
+
+        <!-- OFFERS / ADVERTISEMENTS -->
+        <section class="carousel" id="carousel" aria-label="Offers and announcements" aria-roledescription="carousel">
+            <div class="carousel-track" id="carousel-track"></div>
+            <div class="carousel-controls">
+                <div class="carousel-dots" id="carousel-dots"></div>
+                <div>
+                    <button type="button" class="carousel-btn" id="car-prev" aria-label="Previous offer">&#8249;</button>
+                    <button type="button" class="carousel-btn" id="car-next" aria-label="Next offer">&#8250;</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- QUICK ACTIONS -->
+        <section class="home-section">
+            <h2 class="section-title">What would you like to do?</h2>
+            <div class="action-grid" id="action-grid"></div>
+        </section>
+
+        <!-- RECOMMENDED DOCTORS -->
+        <section class="home-section" id="doctors">
+            <div class="section-head">
+                <h2 class="section-title">Recommended doctors</h2>
+                <span class="section-meta" id="doctor-count"></span>
+            </div>
+            <div class="chip-row" id="spec-filter" aria-label="Filter by specialty"></div>
+            <div class="doctor-grid" id="doctor-grid"></div>
+        </section>
+
+        <!-- SPONSORED STRIP -->
+        <section class="sponsored">
+            <span class="ad-label">Sponsored</span>
+            <div class="sponsored-body">
+                <span class="sponsored-icon" aria-hidden="true">&#127807;</span>
+                <div>
+                    <strong>GreenLeaf Pharmacy</strong>
+                    <p>Upload your prescription and get medicines at your door, with free delivery on the first order.</p>
+                </div>
+            </div>
+            <button type="button" class="btn-ghost" data-offer="2">Get the code</button>
+        </section>
+
+        <!-- TRENDING READS -->
+        <section class="home-section">
+            <div class="section-head">
+                <h2 class="section-title">Trending health reads</h2>
+                <span class="section-meta">Most read this week</span>
+            </div>
+            <div class="read-grid" id="read-grid"></div>
+        </section>
     </main>
 
+
     <script src="js/app.js?v=2"></script>
+    <script src="js/home.js?v=1"></script>
 </body>
 </html>
