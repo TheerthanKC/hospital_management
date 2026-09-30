@@ -88,7 +88,7 @@ if (navContainer && currentUser) {
         <a href="/add-record.html"${isActive('add-record')}>Records</a>
     `;
     const patientLinks = `
-        <a href="/patient-dashboard.html"${isActive('patient-dashboard')}>Patient Dashboard</a>
+        <a href="/patient-dashboard.html"${isActive('patient-dashboard')}>Dashboard</a>
         <a href="/book-appointment.html"${isActive('book-appointment')}>Book Appointment</a>
     `;
 
@@ -426,7 +426,8 @@ async function loadMyRecords() {
         const response = await fetch('/api/records');
         const records = await response.json();
 
-        const myRecords = records.filter(r => r.type !== 'appointment-status' && r.patientName === currentUser.username);
+        // Match by UID, not username — usernames aren't guaranteed unique
+        const myRecords = records.filter(r => r.type !== 'appointment-status' && r.patientUid === currentUser.uid);
         if (myRecords.length === 0) {
             myRecordsList.innerHTML = `<p style="color: var(--text-muted);">No medical records on file.</p>`;
         } else {
@@ -457,7 +458,8 @@ async function loadMyAppointments() {
     try {
         const response = await fetch('/api/appointments');
         const allAppointments = await response.json();
-        const myAppointments = allAppointments.filter(a => a.patientName === currentUser.username);
+        // Match by UID, not username — usernames aren't guaranteed unique
+        const myAppointments = allAppointments.filter(a => a.patientUid === currentUser.uid);
 
         if (myAppointments.length === 0) {
             myApptList.innerHTML = `<p style="color: var(--text-muted);">You haven't requested any appointments yet.</p>`;
