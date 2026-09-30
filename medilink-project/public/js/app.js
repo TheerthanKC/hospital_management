@@ -354,7 +354,7 @@ async function loadAppointmentHistory() {
         if (myHistory.length === 0) {
             historyList.innerHTML = `<p style="color: var(--text-muted);">No appointment history yet.</p>`;
         } else {
-            historyList.innerHTML = myHistory.map(r => renderAppointmentLetter(r)).join('');
+            renderPaginated(historyList, myHistory.slice().reverse(), renderAppointmentLetter);
         }
     } catch (error) {
         console.error(error);
@@ -373,48 +373,160 @@ async function loadAllRecords() {
         if (records.length === 0) {
             allRecordsList.innerHTML = `<p style="color: var(--text-muted);">No records found.</p>`;
         } else {
-            allRecordsList.innerHTML = records.map(r => {
-                if (r.type === 'appointment-status') {
-                    return renderAppointmentLetter(r);
-                }
-                return renderDiagnosisRecord(r);
-            }).join('');
+            // Newest first, 5 per page
+            renderPaginated(allRecordsList, records.slice().reverse(), r =>
+                r.type === 'appointment-status' ? renderAppointmentLetter(r) : renderDiagnosisRecord(r)
+            );
         }
     } catch (error) {
         console.error(error);
     }
 }
 
-// Shared card renderers
-function renderAppointmentLetter(r) {
+// ==========================================
+// Shared record-card helpers
+// ==========================================
+const RECORDS_PER_PAGE = 5;
+
+// Escape user-supplied text before putting it into innerHTML
+function esc(value) {
+    return String(value ?? '').replace(/[&<>"']/g, ch => (
+        { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]
+    ));
+}
+
+// "14:30" -> "2:30 PM"
+function formatTime12(t) {
+    if (!t) return null;
+    const [h, m] = String(t).split(':').map(Number);
+    if (Number.isNaN(h) || Number.isNaN(m)) return t;
+    return `${((h + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
+}
+
+function detailRow(label, value) {
+    return `<div class="record-detail-row"><span>${label}</span><strong>${value}</strong></div>`;
+}
+
+// Small collapsed box; clicking the summary expands it to show every detail
+function renderRecordCard({ patientName, patientUid, subtitle, badgeText, badgeClass, detailsHtml }) {
     return `
-        <div class="dashboard-card" style="margin-bottom: 12px;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap;">
-                <div>
-                    <p><strong>Appointment ${r.status === 'accepted' ? 'Accepted' : 'Rejected'}</strong></p>
-                    <p class="uid-badge">Doctor UID: ${r.doctorUid || 'N/A'}</p>
-                    <p><strong>Doctor:</strong> Dr. ${r.doctorName}</p>
-                    <p class="uid-badge">Patient UID: ${r.patientUid || 'N/A'}</p>
-                    <p><strong>Patient:</strong> ${r.patientName}</p>
-                    <p><strong>Reason for visit:</strong> ${r.reason}</p>
-                    <p style="color: var(--text-muted); font-size: 0.85rem;">${r.date}</p>
+        <div class="record-card">
+            <button type="button" class="record-summary" aria-expanded="false">
+                <div class="record-summary-main">
+                    <div class="record-title-row">
+                        <span class="record-title">${esc(patientName)}</span>
+                        ${patientUid ? `<span class="uid-badge">UID: ${esc(patientUid)}</span>` : ''}
+                    </div>
+                    <span class="record-sub">${subtitle}</span>
                 </div>
-                <span class="status-badge status-${r.status}">${r.status}</span>
+                <span class="status-badge ${badgeClass}">${esc(badgeText)}</span>
+                <span class="record-chevron" aria-hidden="true">&#9660;</span>
+            </button>
+            <div class="record-details">
+                <div class="record-details-inner">
+                    <div class="record-details-body">${detailsHtml}</div>
+                </div>
             </div>
         </div>
     `;
 }
 
+function renderAppointmentLetter(r) {
+    const time = formatTime12(r.appointmentTime);
+    const visit = [time ? `&#128337; ${esc(time)}` : null, r.appointmentDate ? esc(r.appointmentDate) : null]
+        .filter(Boolean).join(' &middot; ') || 'Time not recorded';
+
+    return renderRecordCard({
+        patientName: r.patientName,
+        patientUid: r.patientUid,
+        subtitle: visit,
+        badgeText: r.status,
+        badgeClass: `status-${r.status}`,
+        detailsHtml: `
+            ${detailRow('Result', r.status === 'accepted' ? 'Appointment Accepted' : 'Appointment Rejected')}
+            ${detailRow('Patient', esc(r.patientName))}
+            ${detailRow('Patient UID', esc(r.patientUid || 'N/A'))}
+            ${detailRow('Doctor', 'Dr. ' + esc(r.doctorName))}
+            ${detailRow('Appointment date', esc(r.appointmentDate || 'N/A'))}
+            ${detailRow('Appointment time', esc(time || 'N/A'))}
+            ${detailRow('Reason for visit', esc(r.reason))}
+            ${detailRow('Decision made on', esc(r.date))}
+        `
+    });
+}
+
 function renderDiagnosisRecord(r) {
-    return `
-        <div class="dashboard-card" style="margin-bottom: 12px;">
-            ${r.patientUid ? `<p class="uid-badge">Patient UID: ${r.patientUid}</p>` : ''}
-            <p><strong>Patient:</strong> ${r.patientName}</p>
-            <p><strong>Diagnosis:</strong> ${r.diagnosis}</p>
-            <p><strong>Prescription:</strong> ${r.prescription}</p>
-            <p style="color: var(--text-muted); font-size: 0.85rem;">Logged by Dr. ${r.doctorName} on ${r.date}</p>
-        </div>
-    `;
+    return renderRecordCard({
+        patientName: r.patientName,
+        patientUid: r.patientUid,
+        subtitle: `Diagnosis: ${esc(r.diagnosis)}`,
+        badgeText: 'Diagnosis',
+        badgeClass: 'status-diagnosis',
+        detailsHtml: `
+            ${detailRow('Patient', esc(r.patientName))}
+            ${detailRow('Patient UID', esc(r.patientUid || 'N/A'))}
+            ${detailRow('Diagnosis', esc(r.diagnosis))}
+            ${detailRow('Prescription', esc(r.prescription))}
+            ${detailRow('Logged by', 'Dr. ' + esc(r.doctorName))}
+            ${detailRow('Date', esc(r.date))}
+        `
+    });
+}
+
+// Expand / collapse a record card (one listener handles every list on the page)
+document.addEventListener('click', (e) => {
+    const summary = e.target.closest('.record-summary');
+    if (!summary) return;
+    const card = summary.closest('.record-card');
+    const isOpen = card.classList.toggle('open');
+    summary.setAttribute('aria-expanded', String(isOpen));
+});
+
+// Page numbers with ellipsis, e.g. 1 ... 4 [5] 6 ... 12
+function buildPageList(current, total) {
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    const pages = new Set([1, total, current - 1, current, current + 1]);
+    if (current <= 3) [2, 3, 4].forEach(p => pages.add(p));
+    if (current >= total - 2) [total - 1, total - 2, total - 3].forEach(p => pages.add(p));
+    const sorted = [...pages].filter(p => p >= 1 && p <= total).sort((x, y) => x - y);
+    const out = [];
+    sorted.forEach((p, i) => {
+        if (i > 0 && p - sorted[i - 1] > 1) out.push('...');
+        out.push(p);
+    });
+    return out;
+}
+
+// Renders one page of items into `container`, with a page-number bar underneath
+function renderPaginated(container, items, renderItem, page = 1) {
+    const totalPages = Math.max(1, Math.ceil(items.length / RECORDS_PER_PAGE));
+    page = Math.min(Math.max(1, page), totalPages);
+
+    const slice = items.slice((page - 1) * RECORDS_PER_PAGE, page * RECORDS_PER_PAGE);
+    let html = slice.map(renderItem).join('');
+
+    if (totalPages > 1) {
+        const buttons = buildPageList(page, totalPages).map(p =>
+            p === '...'
+                ? `<span class="page-ellipsis">&hellip;</span>`
+                : `<button type="button" class="page-btn${p === page ? ' active' : ''}" data-page="${p}">${p}</button>`
+        ).join('');
+        html += `
+            <div class="pagination">
+                <button type="button" class="page-btn page-nav" data-page="${page - 1}" ${page === 1 ? 'disabled' : ''}>&lsaquo; Prev</button>
+                ${buttons}
+                <button type="button" class="page-btn page-nav" data-page="${page + 1}" ${page === totalPages ? 'disabled' : ''}>Next &rsaquo;</button>
+            </div>
+        `;
+    }
+
+    container.innerHTML = html;
+
+    container.querySelectorAll('.page-btn[data-page]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            renderPaginated(container, items, renderItem, parseInt(btn.dataset.page, 10));
+        });
+    });
 }
 
 // --- Patient view: their own diagnosis records only ---

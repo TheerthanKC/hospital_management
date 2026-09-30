@@ -151,6 +151,8 @@ app.patch('/api/appointments/:id', (req, res) => {
         patientName: appointment.patientName,
         patientUid: appointment.patientUid,
         reason: appointment.reason,
+        appointmentDate: appointment.date,
+        appointmentTime: appointment.time,
         date: new Date().toLocaleDateString()
     });
 
